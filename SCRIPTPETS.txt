@@ -1,0 +1,324 @@
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local function createCorner(parent, radius)
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, radius)
+	corner.Parent = parent
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+local Main = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local CloseBtn = Instance.new("TextButton")
+
+ScreenGui.Name = "ExploitUI"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Main.Name = "Main"
+Main.Parent = ScreenGui
+Main.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Main.Position = UDim2.new(0.3, 0, 0.3, 0)
+Main.Size = UDim2.new(0, 300, 0, 340)
+createCorner(Main, 10)
+
+Title.Name = "Title"
+Title.Parent = Main
+Title.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "🐾 Reinos dos pets 🐾"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+Title.TextXAlignment = Enum.TextXAlignment.Left
+createCorner(Title, 10)
+
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Parent = Title
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -30, 0, 0)
+CloseBtn.Text = "❌"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+CloseBtn.TextColor3 = Color3.new(1, 1, 1)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 16
+createCorner(CloseBtn, 8)
+
+CloseBtn.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
+
+local dragging, dragInput, dragStart, startPos
+local dragTween
+
+Title.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = Main.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		local goal = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		if dragTween then dragTween:Cancel() end
+		dragTween = TweenService:Create(Main, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = goal })
+		dragTween:Play()
+	end
+end)
+
+local autoClick = false
+local autoPets = false
+local autoRebirth = false
+local petAmount = 1
+local eggName = "Magma Egg"
+
+local function toggle(button, state)
+	button.Text = state and "✔️ ON" or "❌ OFF"
+end
+
+local labelAutoClick = Instance.new("TextLabel")
+labelAutoClick.Parent = Main
+labelAutoClick.Position = UDim2.new(0.05, 0, 0.15, 0)
+labelAutoClick.Size = UDim2.new(0.9, 0, 0, 15)
+labelAutoClick.Text = "Auto Click:"
+labelAutoClick.TextColor3 = Color3.new(1, 1, 1)
+labelAutoClick.Font = Enum.Font.Gotham
+labelAutoClick.TextSize = 14
+labelAutoClick.BackgroundTransparency = 1
+
+local btnAutoClick = Instance.new("TextButton")
+btnAutoClick.Parent = Main
+btnAutoClick.Position = UDim2.new(0.05, 0, 0.2, 0)
+btnAutoClick.Size = UDim2.new(0.9, 0, 0, 30)
+btnAutoClick.TextColor3 = Color3.new(1, 1, 1)
+btnAutoClick.Font = Enum.Font.Gotham
+btnAutoClick.TextSize = 14
+btnAutoClick.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+createCorner(btnAutoClick, 8)
+toggle(btnAutoClick, autoClick)
+
+btnAutoClick.MouseButton1Click:Connect(function()
+	autoClick = not autoClick
+	toggle(btnAutoClick, autoClick)
+end)
+
+local labelPets = Instance.new("TextLabel")
+labelPets.Parent = Main
+labelPets.Position = UDim2.new(0.05, 0, 0.31, 0)
+labelPets.Size = UDim2.new(0.9, 0, 0, 15)
+labelPets.Text = "Pets para girar (1-50):"
+labelPets.TextColor3 = Color3.new(1, 1, 1)
+labelPets.Font = Enum.Font.Gotham
+labelPets.TextSize = 14
+labelPets.BackgroundTransparency = 1
+
+local container = Instance.new("Frame")
+container.Parent = Main
+container.Position = UDim2.new(0.05, 0, 0.36, 0)
+container.Size = UDim2.new(0.9, 0, 0, 30)
+container.BackgroundTransparency = 1
+
+local TextBox = Instance.new("TextBox")
+TextBox.Parent = container
+TextBox.Size = UDim2.new(0.67, -5, 1, 0)
+TextBox.Position = UDim2.new(0.05, 0, 0, 0)
+TextBox.PlaceholderText = "Ex: 5"
+TextBox.Text = ""
+TextBox.TextColor3 = Color3.new(1, 1, 1)
+TextBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+TextBox.Font = Enum.Font.Gotham
+TextBox.TextSize = 14
+createCorner(TextBox, 6)
+
+local btnConfirmPets = Instance.new("TextButton")
+btnConfirmPets.Parent = container
+btnConfirmPets.Position = UDim2.new(0.7, 5, 0, 0)
+btnConfirmPets.Size = UDim2.new(0.25, -5, 2.1, 0)
+btnConfirmPets.Text = "🎯"
+btnConfirmPets.TextColor3 = Color3.new(1, 1, 1)
+btnConfirmPets.BackgroundColor3 = Color3.fromRGB(100, 149, 237)
+btnConfirmPets.Font = Enum.Font.GothamBold
+btnConfirmPets.TextSize = 16
+createCorner(btnConfirmPets, 6)
+
+local eggBox = Instance.new("TextBox")
+eggBox.Parent = container
+eggBox.Size = UDim2.new(0.67, -5, 1, 0)
+eggBox.Position = UDim2.new(0.05, 0, 1.1, 0)
+eggBox.PlaceholderText = "Ex: Magma Egg"
+eggBox.Text = ""
+eggBox.TextColor3 = Color3.new(1, 1, 1)
+eggBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+eggBox.Font = Enum.Font.Gotham
+eggBox.TextSize = 14
+createCorner(eggBox, 6)
+
+btnConfirmPets.MouseButton1Click:Connect(function()
+	local val = tonumber(TextBox.Text)
+	local egg = eggBox.Text
+	local validEggs = {
+		["Magma Egg"] = true,
+		["Sweets Egg"] = true,
+		["Basic Egg"] = true,
+		["Desert Egg"] = true,
+		["Food Egg"] = true,
+		["Frozen Egg"] = true,
+		["Futuristic Egg"] = true,
+		["Rare Egg"] = true,
+		["Ocean Egg"] = true,
+		["Exclusive Egg"] = false,
+	}
+
+	local validNumber = val and val >= 1 and val <= 50
+	local validEgg = validEggs[egg] ~= nil
+
+	if validNumber then
+		petAmount = val
+		TextBox.Text = "✔️ " .. val
+	else
+		TextBox.Text = "❌"
+	end
+
+	if validEgg then
+		eggName = egg
+		eggBox.Text = "✔️ " .. egg
+	else
+		eggBox.Text = "❌"
+	end
+end)
+
+local btnAutoPets = Instance.new("TextButton")
+btnAutoPets.Parent = container
+btnAutoPets.Position = UDim2.new(0.05, 0, 2.2, 0)
+btnAutoPets.Size = UDim2.new(0.9, 0, 0, 30)
+btnAutoPets.TextColor3 = Color3.new(1, 1, 1)
+btnAutoPets.Font = Enum.Font.Gotham
+btnAutoPets.TextSize = 14
+btnAutoPets.BackgroundColor3 = Color3.fromRGB(100, 149, 237)
+createCorner(btnAutoPets, 8)
+toggle(btnAutoPets, autoPets)
+
+btnAutoPets.MouseButton1Click:Connect(function()
+	autoPets = not autoPets
+	toggle(btnAutoPets, autoPets)
+end)
+
+local labelAutoRebirth = Instance.new("TextLabel")
+labelAutoRebirth.Parent = Main
+labelAutoRebirth.Position = UDim2.new(0.05, 0, 0.665, 0)
+labelAutoRebirth.Size = UDim2.new(0.9, 0, 0, 15)
+labelAutoRebirth.Text = "Auto Rebirth:"
+labelAutoRebirth.TextColor3 = Color3.new(1, 1, 1)
+labelAutoRebirth.Font = Enum.Font.Gotham
+labelAutoRebirth.TextSize = 14
+labelAutoRebirth.BackgroundTransparency = 1
+
+local btnAutoRebirth = Instance.new("TextButton")
+btnAutoRebirth.Parent = Main
+btnAutoRebirth.Position = UDim2.new(0.05, 0, 0.715, 0)
+btnAutoRebirth.Size = UDim2.new(0.9, 0, 0, 30)
+btnAutoRebirth.TextColor3 = Color3.new(1, 1, 1)
+btnAutoRebirth.Font = Enum.Font.Gotham
+btnAutoRebirth.TextSize = 14
+btnAutoRebirth.BackgroundColor3 = Color3.fromRGB(72, 209, 204)
+createCorner(btnAutoRebirth, 8)
+toggle(btnAutoRebirth, autoRebirth)
+
+btnAutoRebirth.MouseButton1Click:Connect(function()
+	autoRebirth = not autoRebirth
+	toggle(btnAutoRebirth, autoRebirth)
+end)
+
+local labelAntiAFK = Instance.new("TextLabel")
+labelAntiAFK.Parent = Main
+labelAntiAFK.Position = UDim2.new(0.05, 0, 0.815, 0)
+labelAntiAFK.Size = UDim2.new(0.9, 0, 0, 15)
+labelAntiAFK.Text = "Anti AFK:"
+labelAntiAFK.TextColor3 = Color3.new(1, 1, 1)
+labelAntiAFK.Font = Enum.Font.Gotham
+labelAntiAFK.TextSize = 14
+labelAntiAFK.BackgroundTransparency = 1
+
+local btnAntiAFK = Instance.new("TextButton")
+btnAntiAFK.Parent = Main
+btnAntiAFK.Position = UDim2.new(0.05, 0, 0.865, 0)
+btnAntiAFK.Size = UDim2.new(0.9, 0, 0, 30)
+btnAntiAFK.TextColor3 = Color3.new(1, 1, 1)
+btnAntiAFK.Text = "Anti AFK Script"
+btnAntiAFK.Font = Enum.Font.Gotham
+btnAntiAFK.TextSize = 14
+btnAntiAFK.BackgroundColor3 = Color3.fromRGB(98, 71, 163)
+createCorner(btnAntiAFK, 8)
+
+btnAntiAFK.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet("https://raw.githubusercontent.com/FransizALWAYS/AntiAFK/refs/heads/main/AntiAFK"))()
+end)
+
+task.spawn(function()
+	while true do
+		if autoClick then
+			local success, err = pcall(function()
+				ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Clicker"):FireServer()
+			end)
+			if not success then warn("Erro ao clicar:", err) end
+		end
+		task.wait(0.01)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		if autoRebirth then
+			local success, err = pcall(function()
+				ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Rebirth"):FireServer()
+			end)
+			if not success then warn("Erro ao tentar dar rebirth:", err) end
+		end
+		task.wait(1)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		if autoPets then
+			local eggName = eggBox.Text
+			if eggName ~= "" and eggName:match("%a") then
+				local args = { 
+                    [1] = eggName, 
+                    [2] = petAmount 
+                }
+				game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Egg"):InvokeServer(unpack(args))
+			end
+		end
+		task.wait(5)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		if autoClick then print("Clickando!") end
+		if autoPets then print("Girando " .. tostring(petAmount) .. " pet(s)") end
+		if autoRebirth then print("Rebirth automático...") end
+		task.wait(5)
+	end
+end)
+
+print("Script executado. GG")
